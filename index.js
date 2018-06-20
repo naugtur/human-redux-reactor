@@ -15,7 +15,7 @@ const requestIdleCallback =
     window.requestIdleCallback || (f => setTimeout(f, 0));
 
 module.exports = {
-    addReactorsToStore({ store, reactors, runIdle, throttle, dev }) {
+    addReactorsToStore({ store, reactors, runIdle, idleInterval, throttle, dev }) {
 
         const aCache = safeMemoryCache({ maxTTL: throttle || 1000 });
         function uniqueInTime(str) {
@@ -27,17 +27,17 @@ module.exports = {
         }
 
         if (runIdle) {
-            const idler = debounce(() => store.dispatch({ type: "@@IDLE" }), 30000);
+            const idler = debounce(() => store.dispatch({ type: "@@IDLE" }), idleInterval || 30000);
             store.subscribe(idler);
         }
         store.subscribe(() => {
             const currentState = store.getState();
             let result;
-            reactors.some(reactor => {
+            const found = reactors.some(reactor => {
                 result = reactor(currentState);
                 return !!result && uniqueInTime(result.type);
             });
-            if (result) {
+            if (found) {
                 requestAnimationFrame(() =>
                     requestIdleCallback(
                         () => {
