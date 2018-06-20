@@ -41,6 +41,8 @@ Options:
 |store|your redux store reference|
 |reactors|an array of reactor functions returning an action object or undefined |
 |runIdle | boolean - if true, `{ type: "@@IDLE" }` action is dispatched every 30 seconds unless other actions are happening|
+|throttle| if a reaction of the same type is returned twice within throttle time, only the first onegets dispatched, default: 1000 (miliseconds)|
+|dev| developer mode - prints warnings when throttle takes effect |
 
 
 ```js

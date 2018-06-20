@@ -15,7 +15,7 @@ const requestIdleCallback =
     window.requestIdleCallback || (f => setTimeout(f, 0));
 
 module.exports = {
-    addReactorsToStore({ store, reactors, runIdle, throttle}) {
+    addReactorsToStore({ store, reactors, runIdle, throttle, dev }) {
 
         const aCache = safeMemoryCache({ maxTTL: throttle || 1000 });
         function uniqueInTime(str) {
@@ -23,6 +23,7 @@ module.exports = {
                 aCache.set(str, true);
                 return true;
             }
+            if (dev) { console.log('human-redux-reactor: stopped ' + str + ' from repeating.') }
         }
 
         if (runIdle) {
