@@ -30,10 +30,11 @@ console.log('Test if a reaction is dispatched and does not loop on its own, but 
 const storeMock1 = getStoreMock()
 const neverReactor = () => (undefined)
 const naiveReactor = () => ({ type: '@@TEST' })
+const couldBeStarvedReactor = () => ({ type: '@@IAMAFTER' })
 
 addReactorsToStore({
     store: storeMock1,
-    reactors: [neverReactor, naiveReactor],
+    reactors: [neverReactor, naiveReactor, couldBeStarvedReactor],
     runIdle: true,
     idleInterval: 300,
     throttle: 200,
@@ -41,7 +42,7 @@ addReactorsToStore({
 })
 
 storeMock1.subscribe(trackAndAssert)
-storeMock1.dispatch({ type: '@@INIT'})
+storeMock1.dispatch({ type: '@@INIT' })
 
 const storeSequence = []
 function trackAndAssert() {
@@ -51,38 +52,15 @@ function trackAndAssert() {
         storeMock1._.dt
     ])
     if (storeSequence.length >= 6) {
-        assert.deepEqual((storeSequence), ([
-            [
-                1,
-                '@@INIT',
-                0
-            ],
-            [
-                2,
-                '@@TEST',
-                0
-            ],
-            [
-                3,
-                '@@IDLE',
-                300
-            ],
-            [
-                4,
-                '@@TEST',
-                0
-            ],
-            [
-                5,
-                '@@IDLE',
-                300
-            ],
-            [
-                6,
-                '@@TEST',
-                0
-            ]
-        ]))
+        console.log(storeSequence)
+        assert.deepEqual((storeSequence), (
+            [[1, '@@INIT', 0],
+            [2, '@@TEST', 0],
+            [3, '@@IAMAFTER', 0],
+            [4, '@@IDLE', 300],
+            [5, '@@TEST', 0],
+            [6, '@@IAMAFTER', 0]]
+        ))
         console.log('pass')
         process.exit(0)
     }
