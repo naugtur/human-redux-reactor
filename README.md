@@ -1,5 +1,7 @@
 # human-redux-reactor
 
+A tool for managing your app lifecycle. React to state in your store and dispatch necessary actions. 
+
 An implementation of reactor pattern from Henrik Joreteg's book ["Human Redux"](https://reduxbook.com/) <- all credit for this goes to Henrik.
 
 ## Install
@@ -36,12 +38,13 @@ addReactorsToStore(options)
 ```
 
 Options:
-|||
-|---|---|
+
+| | |
+| --- | --- |
 |store|your redux store reference|
 |reactors|an array of reactor functions returning an action object or undefined |
 |runIdle | boolean - if true, `{ type: "@@IDLE" }` action is dispatched every 30 seconds unless other actions are happening|
-|throttle| if a reaction of the same type is returned twice within throttle time, only the first onegets dispatched, default: 1000 (miliseconds)|
+|throttle| if a reaction of the same type is returned twice within throttle time, only the first one gets dispatched, default: 1000 (miliseconds). Set to `0` to disable entirely|
 |dev| developer mode - prints warnings when throttle takes effect |
 
 
@@ -69,7 +72,7 @@ addReactorsToStore({
 })
 ```
 
-### Infinite loop blocking
+### Infinite loop prevention
 
 From the book:
 > So,	as	you	can	imagine,	using	this	approach	makes	it	pretty	simple	to	create	a	scenario	where	your

@@ -16,15 +16,22 @@ const requestIdleCallback =
 
 module.exports = {
     addReactorsToStore({ store, reactors, runIdle, idleInterval, throttle, dev }) {
+        let uniqueInTime
+        let aCache
 
-        const aCache = safeMemoryCache({ maxTTL: throttle || 1000 });
-        function uniqueInTime(str) {
-            if (!aCache.get(str)) {
-                aCache.set(str, true);
-                return true;
+        if(throttle !==0){
+            aCache = safeMemoryCache({ maxTTL: throttle || 1000 });
+            uniqueInTime = (str) => {
+                if (!aCache.get(str)) {
+                    aCache.set(str, true);
+                    return true;
+                }
+                if (dev) { console.log('human-redux-reactor: stopped ' + str + ' from repeating.') }
             }
-            if (dev) { console.log('human-redux-reactor: stopped ' + str + ' from repeating.') }
+        } else {
+            uniqueInTime = () => true
         }
+
 
         if (runIdle) {
             const idler = debounce(() => store.dispatch({ type: "@@IDLE" }), idleInterval || 30000);
