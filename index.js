@@ -15,10 +15,14 @@ const requestIdleCallback =
     window.requestIdleCallback || (f => setTimeout(f, 0));
 
 module.exports = {
-    addReactorsToStore({ store, reactors, runIdle, idleInterval, throttle, dev }) {
+    addReactorsToStore({ store, reactors, runIdle, idleInterval, throttle, unthrottleOnUserInteraction, dev }) {
 
         const aCache = safeMemoryCache({ maxTTL: throttle || 1000 });
-        function uniqueInTime(str) {
+        if (unthrottleOnUserInteraction) {
+            document.addEventListener('mousedown', () => aCache.clear())
+        }
+
+        const uniqueInTime = (str) => {
             if (!aCache.get(str)) {
                 aCache.set(str, true);
                 return true;
@@ -30,7 +34,7 @@ module.exports = {
             const idler = debounce(() => store.dispatch({ type: "@@IDLE" }), idleInterval || 30000);
             store.subscribe(idler);
         }
-        store.subscribe(() => {
+        const subscription = () => {
             const currentState = store.getState();
             let result;
             const found = reactors.some(reactor => {
@@ -47,6 +51,12 @@ module.exports = {
                     )
                 );
             }
-        });
+        }
+        store.subscribe(subscription);
+
+        return {
+            triggerReactors: () => subscription,
+            destroy: () => store.unsubscribe(subscription)
+        }
     }
 };
