@@ -15,13 +15,16 @@ const requestIdleCallback =
     window.requestIdleCallback || (f => setTimeout(f, 0));
 
 module.exports = {
-    addReactorsToStore({ store, reactors, runIdle, idleInterval, throttle, unthrottleOnUserInteraction, dev }) {
+    createReactor({ reactors, runIdle, idleInterval, quietPeriod, dev }) {
 
-        const aCache = safeMemoryCache({ maxTTL: throttle || 1000 });
-        if (unthrottleOnUserInteraction) {
-            document.addEventListener('mousedown', () => aCache.clear())
+        const aCache = safeMemoryCache({ maxTTL: quietPeriod || 1000 });
+        const cancelQuietPeriod = () => aCache.clear();
+        const cancelQuietPeriodOnAction = (action) => {
+            if (!aCache.get(action.type)) {
+                cancelQuietPeriod()
+                return true
+            }
         }
-
         const uniqueInTime = (str) => {
             if (!aCache.get(str)) {
                 aCache.set(str, true);
@@ -30,33 +33,40 @@ module.exports = {
             if (dev) { console.log('human-redux-reactor: stopped ' + str + ' from repeating.') }
         }
 
-        if (runIdle) {
-            const idler = debounce(() => store.dispatch({ type: "@@IDLE" }), idleInterval || 30000);
-            store.subscribe(idler);
-        }
-        const subscription = () => {
-            const currentState = store.getState();
-            let result;
-            const found = reactors.some(reactor => {
-                result = reactor(currentState);
-                return !!result && uniqueInTime(result.type);
-            });
-            if (found) {
-                requestAnimationFrame(() =>
-                    requestIdleCallback(
-                        () => {
-                            store.dispatch(result);
-                        },
-                        { timeout: 500 }
-                    )
-                );
+        let triggerReactors = () => { throw Error('must call addToStore first') }
+        const addToStore = (store) => {
+            if (runIdle) {
+                const idler = debounce(() => store.dispatch({ type: "@@IDLE" }), idleInterval || 30000);
+                store.subscribe(idler);
             }
+
+            triggerReactors = () => {
+                const currentState = store.getState();
+                let result;
+                const found = reactors.some(reactor => {
+                    result = reactor(currentState);
+                    return !!result && result.hasOwnProperty('type') && uniqueInTime(result.type);
+                });
+                if (found) {
+                    requestAnimationFrame(() =>
+                        requestIdleCallback(
+                            () => {
+                                store.dispatch(result);
+                            },
+                            { timeout: 500 }
+                        )
+                    );
+                }
+            }
+            store.subscribe(triggerReactors);
+
         }
-        store.subscribe(subscription);
 
         return {
-            triggerReactors: () => subscription,
-            destroy: () => store.unsubscribe(subscription)
+            addToStore,
+            triggerReactors: () => triggerReactors(),
+            cancelQuietPeriod,
+            cancelQuietPeriodOnAction
         }
     }
 };
