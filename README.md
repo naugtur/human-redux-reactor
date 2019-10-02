@@ -41,7 +41,7 @@ Options:
 |---|---|
 |reactors|an array of reactor functions returning an action object or undefined |
 |runIdle | boolean - if true, `{ type: "@@IDLE" }` action is dispatched every 30 seconds unless other actions are happening|
-|quietPeriod| if a reaction of the same type is returned twice within quietPeriod time, only the first one gets dispatched, default: 1000 (miliseconds)|
+|quietPeriod| if a reaction of the same type is returned twice within quietPeriod time, only the first one gets dispatched, default: 1000 (miliseconds). Set to 0 to disable entirely.|
 |dev| developer mode - prints warnings when quietPeriod takes effect |
 
 API:

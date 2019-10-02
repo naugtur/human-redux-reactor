@@ -16,22 +16,30 @@ const requestIdleCallback =
 
 module.exports = {
     createReactor({ reactors, runIdle, idleInterval, quietPeriod, dev }) {
+        let uniqueInTime, cancelQuietPeriod, cancelQuietPeriodOnAction
+        
 
-        const aCache = safeMemoryCache({ maxTTL: quietPeriod || 1000 });
-        const cancelQuietPeriod = () => aCache.clear();
-        const cancelQuietPeriodOnAction = (action) => {
-            if (!aCache.get(action.type)) {
-                cancelQuietPeriod()
-                return true
+        if (quietPeriod !== 0) {
+            const aCache = safeMemoryCache({ maxTTL: quietPeriod || 1000 });
+            cancelQuietPeriod = () => aCache.clear();
+            cancelQuietPeriodOnAction = (action) => {
+                if (!aCache.get(action.type)) {
+                    cancelQuietPeriod()
+                    return true
+                }
             }
-        }
-        const uniqueInTime = (str) => {
-            if (!aCache.get(str)) {
-                aCache.set(str, true);
-                return true;
+    
+            uniqueInTime = (str) => {
+                if (!aCache.get(str)) {
+                    aCache.set(str, true);
+                    return true;
+                }
+                if (dev) { console.log('human-redux-reactor: stopped ' + str + ' from repeating.') }
             }
-            if (dev) { console.log('human-redux-reactor: stopped ' + str + ' from repeating.') }
+        } else {
+            uniqueInTime = cancelQuietPeriod = cancelQuietPeriodOnAction = () => true
         }
+       
 
         let triggerReactors = () => { throw Error('must call addToStore first') }
         const addToStore = (store) => {
