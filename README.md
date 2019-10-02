@@ -1,5 +1,7 @@
 # human-redux-reactor
 
+A tool for managing your app lifecycle. React to state in your store and dispatch necessary actions. 
+
 An implementation of reactor pattern from Henrik Joreteg's book ["Human Redux"](https://reduxbook.com/) <- all credit for this goes to Henrik.
 
 ## Install
